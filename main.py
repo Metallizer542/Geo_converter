@@ -2,6 +2,8 @@ from itertools import zip_longest
 from configparser import ConfigParser
 import csv
 
+degree_sign = u'\N{DEGREE SIGN}'
+minute_sign = '\''
 config_obj = ConfigParser()
 config_obj.read('config.ini')
 
@@ -30,7 +32,7 @@ def decdeg2dms(dd):
     minutes, seconds = divmod(dd * 3600, 60)
     degrees, minutes = divmod(minutes, 60)
     degrees = degrees if is_positive else -degrees
-    return degrees, minutes, round(seconds, 3)
+    return str(int(degrees))+degree_sign + str(int(minutes)) + minute_sign + str(round(seconds, 3))+'\"'
 
 
 def check_and_replace_delimiter(new_data):
@@ -54,20 +56,23 @@ for cor in array_x:
 
 for cor in array_y:
     cor = check_and_replace_delimiter(cor)
+
     y_coordinates.append(cor)
 
 for x in x_coordinates:
     transformed_x_values.append(decdeg2dms(float(x)))
 
 for y in y_coordinates:
-    transformed_y_values.append(decdeg2dms(float(y)))
+    y = decdeg2dms(float(y))
+    transformed_y_values.append(y)
+
 
 fieldnames = ['x', 'y']
 rez = zip_longest(transformed_x_values, transformed_y_values, fillvalue='None')
 
 with open(output_file_path, 'w', newline='') as csv_out:
-    writer = csv.writer(csv_out, delimiter=';')
+    writer = csv.writer(csv_out, delimiter=';', quotechar='|', quoting=csv.QUOTE_NONE)
     writer.writerow(fieldnames)
-    for r in list(rez):
+    for r in rez:
         print(r)
         writer.writerow(r)
